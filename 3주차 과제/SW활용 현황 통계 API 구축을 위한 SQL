@@ -1,0 +1,62 @@
+-- 월별 접속자 수
+SELECT
+    SUBSTRING(create_date, 1, 4) AS request_month,
+    COUNT(DISTINCT user_id) AS monthly_count                 
+FROM
+    statistic.request_info
+GROUP BY
+    request_month  
+ORDER BY
+    request_month desc;   
+
+ 
+-- 일자별 접속자 수
+  SELECT
+    SUBSTRING(create_date, 1, 6) AS requestMonth,  
+    COUNT(DISTINCT user_id) AS userCount          
+FROM
+    statistic.request_info
+WHERE
+    SUBSTRING(create_date, 1, 6)
+GROUP BY
+    SUBSTRING(create_date, 1, 6);
+
+-- 평균 하루 로그인 수
+SELECT
+	stat_date,
+	AVG(daily_login_count)as avg_daily_logins
+FROM (
+	SELECT
+		LEFT(create_date, 6) AS stat_date, 
+		COUNT(*) AS daily_login_count
+	FROM
+		statistic.request_info
+	GROUP BY
+		stat_date
+	) AS daily_counts;
+
+-- 부서별 월별 로그인 수
+
+select 
+    d.department_name,
+    SUBSTRING(ri.create_date, 1, 4) AS yearmonth,
+    COUNT(*) AS monthly_login_count
+from 
+    statistic.request_info ri, 
+    statistic.user u, 
+    statistic.departments d
+where 
+    ri.user_id = u.user_id and d.department_id = u.department_id 
+group by
+    d.department_name, SUBSTRING(ri.create_date, 1, 4) 
+order by 
+    d.department_name;
+
+-- 휴일을 제외한 로그인 수
+
+SELECT
+    COUNT(*) AS daily_login_count
+FROM
+    statistic.request_info
+WHERE
+    DAYOFWEEK(STR_TO_DATE(LEFT(create_date, 6), '%y%m%d')) NOT IN (1, 7);
