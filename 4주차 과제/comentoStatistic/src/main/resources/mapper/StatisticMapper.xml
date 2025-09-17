@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.demo.comentoStatistic.dao.StatisticMapper">
+
+    <select id="selectYearLogin" parameterType="string" resultType="YearCountDto">
+        SELECT
+            CONCAT('20', #{year}) as year, count(*) as totCnt
+        FROM
+            statistic.request_info ri
+        WHERE
+            LEFT(ri.create_date, 2) = #{year};
+    </select>
+    <!--일자별 접속자 수-->
+    <select id="selectDailyActiveUsers" parameterType="string" resultType="com.demo.comentoStatistic.dto.DailyUserCountDto">
+        SELECT
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', create_date), '%Y%m%d%H%i'), '%Y%m%d') AS statDate,
+            COUNT(DISTINCT user_id) AS userCnt
+        FROM
+            statistic.request_info
+        WHERE
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', create_date), '%Y%m%d%H%i'), '%Y%m%d') = #{statDateValue}
+        GROUP BY
+            statDate;
+    </select>
+    <!--평균 하루 로그인 수-->
+    <select id="selectAvgDailyLogins" resultType="double">
+        SELECT
+            AVG(daily_login_count)
+        FROM (
+            SELECT
+                COUNT(*) AS daily_login_count
+            FROM
+               statistic.request_info
+            GROUP BY
+                LEFT(create_date, 6)
+        ) AS daily_counts;
+    </select>
+    <!--휴일을 제외한 로그인 수-->
+    <select id="selectBusinessDayLogins" resultType="long">
+        SELECT
+            COUNT(*)
+        FROM
+            statistic.request_info ri
+        LEFT JOIN
+            statistic.holidays h ON STR_TO_DATE(LEFT(ri.create_date, 6), '%y%m%d') = h.holiday_date
+        WHERE
+            DAYOFWEEK(STR_TO_DATE(LEFT(ri.create_date, 6), '%y%m%d')) NOT IN (1, 7)
+        AND h.holiday_date IS NULL;
+    </select>
+    <!--년월별 사용자 접속자수-->
+    <select id="selectMonthlyUsers" parameterType="string" resultType="MonthlyUserCountDto">
+        SELECT
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', create_date), '%Y%m%d%H%i'), '%Y%m') AS yearMonth,
+            COUNT(DISTINCT user_id) AS userCnt
+        FROM
+            statistic.request_info
+        WHERE
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', create_date), '%Y%m%d%H%i'), '%Y%m') = #{yearMonthValue}
+        GROUP BY
+            yearMonth;
+    </select>
+    <!--년월별 로그인 요청 수-->
+    <select id="selectMonthlyLoginCount" parameterType="string" resultType="com.demo.comentoStatistic.dto.MonthlyLoginCountDto">
+        SELECT
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', create_date), '%Y%m%d%H%i'), '%Y%m') AS yearMonth,
+            COUNT(*) AS loginCnt
+        FROM
+            statistic.request_info
+        WHERE
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', create_date), '%Y%m%d%H%i'), '%Y%m') = #{yearMonthValue}
+        GROUP BY
+            yearMonth;
+    </select>
+    <!--년월별 부서별 사용자 접속자수-->
+    <select id="selectDeptMonthlyActiveUsers" parameterType="map" resultType="com.demo.comentoStatistic.dto.DeptMonthlyUserCountDto">
+        SELECT
+            d.hr_organ AS deptCode,
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', ri.create_date), '%Y%m%d%H%i'), '%Y%m') AS yearMonth,
+            COUNT(DISTINCT ri.user_id) AS userCnt
+        FROM
+            statistic.request_info ri
+        JOIN
+            statistic.user u ON ri.user_id = u.user_id
+        JOIN
+            statistic.departments d ON u.department_id = d.department_id
+        WHERE
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', ri.create_date), '%Y%m%d%H%i'), '%Y%m') = #{yearMonth}
+            AND d.department_id = #{departmentId}
+        GROUP BY
+            deptCode, yearMonth;
+    </select>
+    <!--년월별 부서별 로그인 요청 수-->
+    <select id="selectDeptMonthlyLogins" parameterType="map" resultType="com.demo.comentoStatistic.dto.DeptMonthlyLoginsDto">
+        SELECT
+            d.hr_organ AS deptCode,
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', ri.create_date), '%Y%m%d%H%i'), '%Y%m') AS yearMonth,
+            COUNT(*) AS loginCnt
+        FROM
+            statistic.request_info ri
+        JOIN
+            statistic.user u ON ri.user_id = u.user_id
+        JOIN
+            statistic.departments d ON u.department_id = d.department_id
+        WHERE
+            DATE_FORMAT(STR_TO_DATE(CONCAT('20', ri.create_date), '%Y%m%d%H%i'), '%Y%m') = #{yearMonth}
+            AND d.department_id = #{departmentId}
+        GROUP BY
+            d.hr_organ, yearMonth;
+    </select>
+    <!--년월별 게시글 작성 수-->
+    <select id="selectBoardPostCount" parameterType="map" resultType="com.demo.comentoStatistic.dto.BoardPostCountDto">
+        SELECT
+            board_id AS boardId,
+            DATE_FORMAT(created_at, '%Y%m') AS yearMonth,
+            COUNT(*) AS postCnt
+        FROM
+            posts
+        WHERE
+            board_id = #{boardId}
+            AND DATE_FORMAT(created_at, '%Y%m') = #{yearMonth}
+        GROUP BY
+            boardId, yearMonth;
+    </select>
+
+</mapper>
