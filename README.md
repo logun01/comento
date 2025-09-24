@@ -20,7 +20,7 @@ Spring 개발 환경 구성
 
 ## 3주차
 
-- 간단한 Restful API 구현
+- 주제: 간단한 Restful API 구현
 - 샘플 데이터 DB table로 작성 후 table에 insert
 - 통계API 구축SQL 작성 ( Group by, union, substr, case when then 구문 사용 )
     1. 월별 접속자 수
@@ -31,5 +31,5 @@ Spring 개발 환경 구성
 
 ## 4주차
 
-- 3차 과제에서 작성한 SQL을 활용하여API 구축
+- 주제: 3차 과제에서 작성한 SQL을 활용하여API 구축
 - 2차 과제의 API 가이드를 보완
